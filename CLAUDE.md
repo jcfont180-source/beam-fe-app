@@ -1,8 +1,18 @@
 # Beam FE solver + web app
 
 ## Spec (I write this section; don't edit it)
-- Units:
-- Sign conventions (deflection, load, moment):
+- Units: N, mm, MPa throughout the solver (E in MPa, I in mm^4,
+  distributed loads in N/mm, moments in N·mm, rotations in radians).
+- Sign conventions: x = 0 at the left end, increasing right. Deflection v
+  positive up; rotation θ = dv/dx (counterclockwise positive). Inside the
+  solver, forces are positive up and nodal moments counterclockwise
+  positive. App users enter downward loads as positive numbers; the app
+  flips the sign before calling the solver. Reported shear and moment use
+  the textbook convention: sagging moment positive, shear positive when it
+  tends to rotate the segment clockwise, so M = EI·v'' and V = dM/dx.
+- Sanity case: cantilever fixed at x = 0, downward tip load P gives
+  negative tip deflection, negative tip rotation, negative moment at the
+  fixed end.
 - Current phase and its gate: Setup only. Repo skeleton, no solver code.
 
 ## Working rules
