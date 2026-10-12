@@ -51,7 +51,8 @@ input or a default value). While the required nodes place every load
 and support exactly, subdividing the space between them provides the
 resolution needed to render smooth, continuous shear, moment, and
 deflection plots. The default value of n will be set by the Phase B
-convergence study.
+convergence study. The maximum allowed value is n = 50 per segment,
+and no more than 500 elements total.
 
 ### First test case (Decision 4)
 
@@ -68,6 +69,31 @@ Cantilever fixed at x = 0, point load at x = L, measured test bar.
   case (the exact deflection is cubic, matching the element shape
   functions), so any error beyond floating-point noise is a bug.
 - Relative tolerance: 1e-6.
+
+### Singularity check
+
+- When: after supports are applied (constrained rows and columns
+  removed), before solving Ku = F.
+- Test: the condition number of the reduced stiffness matrix. Do not
+  test det(K) == 0; in floating point, det of a singular matrix can
+  print as exactly 0 by coincidence or as a small nonzero number.
+- Threshold: if cond(K_reduced) > 1e14, the beam is treated as
+  unstable. Tentative: Phase B must confirm that every stable test
+  case at the maximum allowed mesh (n = 50 per segment, 500 elements
+  total) stays well below 1e14, including a case with the maximum
+  number of elements, and record the largest value found.
+- Failure: raise a custom exception, UnstableBeamError, with the
+  message "Beam is unstable: add supports. The current supports do
+  not prevent rigid-body motion." The solver never returns results
+  for an unstable beam.
+- App: catch UnstableBeamError and show the message to the user
+  instead of a crash or plots.
+- Must-fail tests (from D2):
+  - No supports at all: raises UnstableBeamError.
+  - Pin at x = 0 only (v = 0 there, rotation free): raises
+    UnstableBeamError (rigid tilt about the pin survives).
+- Must-pass tests: cantilever fixed at x = 0 and pin at x = 0 +
+  roller at x = L solve without error.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
