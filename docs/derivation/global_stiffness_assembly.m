@@ -82,3 +82,13 @@ fprintf('\nNumeric K (E = 68900 MPa, I = 65.68 mm^4, L = 100 mm):\n');
 fprintf('  det(Kn)  = %g\n', det(Kn));
 fprintf('  rank(Kn) = %d\n', rank(Kn));
 fprintf('  cond(Kn) = %g\n', cond(Kn));
+%% 7. Supports: reduced stiffness matrices
+cases = {'Cantilever (fix node 1)',    [1 2];
+    'Pin node 1 only',            1;
+    'Pin node 1 + roller node 3', [1 5]};
+fprintf('\n%-30s %6s %6s\n', 'Support case', 'Size', 'Rank');
+for i = 1:size(cases, 1)
+    free = setdiff(1:6, cases{i, 2});
+    Kr = K(free, free);
+    fprintf('%-30s %3dx%-2d %5d\n', cases{i,1}, numel(free), numel(free), double(rank(Kr)));
+end
