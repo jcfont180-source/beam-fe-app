@@ -15,6 +15,44 @@
   fixed end.
 - Current phase and its gate: Setup only. Repo skeleton, no solver code.
 
+### Meshing rule
+
+#### 1. Required node locations (v1)
+To ensure structural correctness and mathematical alignment with the
+solver, nodes must be placed at:
+- Supports: to allow the solver to enforce boundary conditions by
+  striking out the appropriate rows and columns.
+- Point loads and applied moments: to allow external forces to drop
+  directly into the global nodal force vector without missing peak
+  moments.
+- Distributed load boundaries: at the exact start and end coordinates
+  of any uniform load, so equivalent nodal forces are not applied over
+  empty spans.
+- Beam ends: at the left and right ends of the physical beam.
+
+Required node locations that coincide (within 1e-9 mm) are merged
+into one node.
+
+#### 2. Out of scope for v1
+The following node triggers are acknowledged but explicitly excluded
+from version 1:
+- Changes in cross-section (I): v1 assumes a single, continuous
+  rectangular profile.
+- Changes in material (E): v1 assumes a homogeneous material
+  throughout the entire beam.
+- Internal hinges: v1 does not support hinges, as they require an
+  architectural change to the matrix assembly to track an uncoupled,
+  extra rotational DOF.
+
+#### 3. Subdivision rule
+Between any two adjacent required nodes, the segment is subdivided
+into n equal-length elements (n elements per segment, set by user
+input or a default value). While the required nodes place every load
+and support exactly, subdividing the space between them provides the
+resolution needed to render smooth, continuous shear, moment, and
+deflection plots. The default value of n will be set by the Phase B
+convergence study.
+
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
 - Never change an expected value in tests/. If a test fails, fix the
