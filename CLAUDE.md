@@ -72,30 +72,41 @@ Cantilever fixed at x = 0, point load at x = L, measured test bar.
   functions), so any error beyond floating-point noise is a bug.
 - Relative tolerance: 1e-6.
 
-### Singularity check
+### Stability check
 
-- When: after supports are applied (constrained rows and columns
-  removed), before solving Ku = F.
-- Test: the condition number of the reduced stiffness matrix. Do not
-  test det(K) == 0; in floating point, det of a singular matrix can
-  print as exactly 0 by coincidence or as a small nonzero number.
-- Threshold: if cond(K_reduced) > 1e14, the beam is treated as
-  unstable. Tentative: Phase B must confirm that every stable test
-  case at the maximum allowed mesh (n = 50 per segment, 500 elements
-  total) stays well below 1e14, including a case with the maximum
-  number of elements, and record the largest value found.
-- Failure: raise a custom exception, UnstableBeamError, with the
-  message "Beam is unstable: add supports. The current supports do
-  not prevent rigid-body motion." The solver never returns results
-  for an unstable beam.
+- Rule (exact, for a straight beam with no hinges): the beam is
+  stable if and only if it has at least one fixed support, or
+  deflection is held (by any support) at two or more different
+  locations. Otherwise it is unstable.
+- Proof: rigid-body motion is v(x) = a + bx, theta = b. A fixed
+  support at x0 gives b = 0 and then a = 0. Supports at x1 != x2 give
+  b(x1 - x2) = 0, so b = 0 and a = 0. A single pin or roller gives
+  only a = -b*x1, so the beam tilts freely about it.
+- When: after validate_beam, before building the mesh. The check
+  uses the supports only, never the stiffness matrix.
+- Failure: raise UnstableBeamError with the message "Beam is
+  unstable: add supports. The current supports do not prevent
+  rigid-body motion." The solver never returns results for an
+  unstable beam.
 - App: catch UnstableBeamError and show the message to the user
   instead of a crash or plots.
-- Must-fail tests (from D2):
+- Condition number: compute cond of the reduced stiffness matrix
+  after scaling it so its diagonal entries are all 1, and report it
+  in the results as a diagnostic. It is never used to reject a beam.
+  Phase B records the largest value found across its test cases.
+- Why not a condition-number threshold: very short elements make K
+  badly conditioned without making the beam unstable. A throwaway
+  check with a load 0.01 mm from a support (n = 50) gave a raw
+  condition number of 5.7e19, higher than truly unstable beams,
+  while deflections stayed accurate to 5e-6.
+- Must-fail tests:
   - No supports at all: raises UnstableBeamError.
-  - Pin at x = 0 only (v = 0 there, rotation free): raises
-    UnstableBeamError (rigid tilt about the pin survives).
-- Must-pass tests: cantilever fixed at x = 0 and pin at x = 0 +
-  roller at x = L solve without error.
+  - Pin at x = 0 only: raises UnstableBeamError.
+- Must-pass tests (solve without error):
+  - Cantilever fixed at x = 0.
+  - Pin at x = 0 + roller at x = L.
+  - Regression: pin at x = 0 + roller at x = L, point load at
+    x = 0.1 mm, n = 50 per segment.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
