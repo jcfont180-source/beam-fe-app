@@ -17,7 +17,8 @@ The script runs five checks on the result, all of which pass:
 ## Global stiffness assembly
 
 `global_stiffness_assembly.m` assembles the 6x6 global stiffness matrix
-of a beam made of two equal elements. It runs six checks:
+of a beam made of two equal elements. It runs six checks, all of which
+pass:
 
 1. Matches hand assembly
 2. Symmetry
