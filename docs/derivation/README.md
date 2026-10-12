@@ -13,3 +13,19 @@ The script runs five checks on the result, all of which pass:
 3. Rigid translation
 4. Rigid rotation
 5. Moment equilibrium
+
+## Global stiffness assembly
+
+`global_stiffness_assembly.m` assembles the 6x6 global stiffness matrix
+of a beam made of two equal elements. It runs six checks:
+
+1. Matches hand assembly
+2. Symmetry
+3. Rigid translation
+4. Rigid rotation
+5. Rank = 4
+6. det = 0
+
+In floating point, det can print as exactly 0 by coincidence, so
+singularity of a numeric stiffness matrix should be tested with the
+condition number instead.
