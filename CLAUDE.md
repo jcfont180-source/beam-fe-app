@@ -23,3 +23,5 @@
   solver in its own module; the Streamlit app only calls it.
 - Every function's docstring names the equation it implements.
 - Run pytest and show me the output before calling anything done.
+- If I ask to see a diff before committing, stop after showing it and
+  wait for my explicit approval. Do not commit or push in the same turn.
