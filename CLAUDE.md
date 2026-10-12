@@ -53,6 +53,22 @@ resolution needed to render smooth, continuous shear, moment, and
 deflection plots. The default value of n will be set by the Phase B
 convergence study.
 
+### First test case (Decision 4)
+
+Cantilever fixed at x = 0, point load at x = L, measured test bar.
+- E = 68,900 MPa, I = 65.68 mm^4 (measured; see
+  docs/measurements/bar_dimensions.md), L = 220 mm
+- Load: 500 g, P = 0.500 x 9.81 = 4.905 N downward
+  (solver input: -4.905 N)
+- Expected (hand-calculated, standard cantilever formulas):
+  - Tip deflection v(L) = -3.847100 mm   (|v| = PL^3/3EI)
+  - Tip rotation theta(L) = -0.02623022 rad   (|theta| = PL^2/2EI)
+  - Fixed-end moment M(0) = -1079.1 N*mm   (|M| = PL, hogging)
+- Run with 1, 2, and 4 elements; all must pass. FE is exact for this
+  case (the exact deflection is cubic, matching the element shape
+  functions), so any error beyond floating-point noise is a bug.
+- Relative tolerance: 1e-6.
+
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
 - Never change an expected value in tests/. If a test fails, fix the
