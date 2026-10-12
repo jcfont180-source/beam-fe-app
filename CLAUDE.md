@@ -13,7 +13,9 @@
 - Sanity case: cantilever fixed at x = 0, downward tip load P gives
   negative tip deflection, negative tip rotation, negative moment at the
   fixed end.
-- Current phase and its gate: Setup only. Repo skeleton, no solver code.
+- Current phase and its gate: Phase A: solver core. Gate: the first
+  test case, must-fail tests, and must-pass tests all pass, and I can
+  explain every function in the solver.
 
 ### Meshing rule
 
