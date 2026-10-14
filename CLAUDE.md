@@ -162,6 +162,29 @@ moment. Tests use only the expected values written here.
   opposite signs of a reaction moment and the diagram moment at the
   same point.
 
+#### Case 3: simply supported, midspan point load
+
+- Pin at x = 0, roller at x = 220 mm; P = 4.905 N downward at
+  x = 110 mm (solver input -4.905).
+- Formulas: |v(L/2)| = PL^3/48EI, |theta(0)| = |theta(L)| = PL^2/16EI,
+  |M(L/2)| = PL/4, reactions P/2 each. Cross-check by symmetry: two
+  cantilevers of length L/2 carrying P/2, so v(L/2) is 1/16 and
+  theta(0) is 1/8 of the first test case's tip values.
+- Expected at n = 1, 2, 4 (per segment):
+  - v(110) = -0.2404437 mm
+  - theta(0) = -0.003278778 rad, theta(220) = +0.003278778 rad
+  - M(110) = +269.775 N*mm (both the just-left and just-right values)
+  - M(0) = 0 N*mm, M(220) = 0 N*mm
+  - V just left of x = 110: +2.4525 N; just right: -2.4525 N
+    (the jump equals P)
+  - V(0) = +2.4525 N; V at x = 220 (just-left value): -2.4525 N
+  - Reactions: force +2.4525 N at x = 0 and at x = 220; moment 0 at
+    both (pin and roller do not resist rotation)
+- Zero values use the absolute tolerances above.
+- Nodal values are exact for any n (the load sits at a node).
+- Purpose: tests a shear jump at a point load, opposite end rotations,
+  and pin and roller reactions.
+
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
 - Never change an expected value in tests/. If a test fails, fix the
