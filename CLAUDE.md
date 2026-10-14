@@ -136,6 +136,32 @@ moment. Tests use only the expected values written here.
 - Nodal values are exact for any n (consistent uniform-load vector).
 - Purpose: closes the -f_eq gap found by the A4 sabotage check.
 
+#### Case 2: cantilever, applied tip moment
+
+- Fixed at x = 0; applied moment M0 = 500 N*mm counterclockwise at
+  x = 220 mm (solver input +500). No other loads.
+- Formulas: |v(L)| = M0 L^2/2EI, |theta(L)| = M0 L/EI, M(x) = +M0,
+  V(x) = 0 (pure bending: the beam bends into a smile).
+- Expected at n = 1, 2, 4:
+  - v(L) = +2.673825 mm
+  - theta(L) = +0.02430750 rad
+  - M(0) = +500 N*mm, V(0) = 0 N
+  - Reaction at x = 0: force 0 N, moment -500 N*mm (solver
+    convention: the wall twists clockwise; compare M(0) = +500 in
+    diagram convention)
+- Expected at n = 4, both the just-left and just-right values at
+  x = 55, 110, 165: V = 0 N, M = +500 N*mm.
+- Expected at x = 220 (free end, just-left value only): V = 0 N,
+  M = +500 N*mm. M is not 0 here because the moment is applied at
+  the tip.
+- Zero values use the absolute tolerances above; the zero reaction
+  force uses 1e-9 N.
+- Nodal values are exact for any n (the exact deflection is a
+  quadratic, which the cubic element contains).
+- Purpose: tests the applied-moment input and its sign, and the
+  opposite signs of a reaction moment and the diagram moment at the
+  same point.
+
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
 - Never change an expected value in tests/. If a test fails, fix the
