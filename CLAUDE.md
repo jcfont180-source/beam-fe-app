@@ -13,9 +13,10 @@
 - Sanity case: cantilever fixed at x = 0, downward tip load P gives
   negative tip deflection, negative tip rotation, negative moment at the
   fixed end.
-- Current phase and its gate: Phase A: solver core. Gate: the first
-  test case, must-fail tests, and must-pass tests all pass, and I can
-  explain every function in the solver.
+- Current phase and its gate: Phase B: verification. Gate: every
+  Phase B case passes, the convergence study shows the expected error
+  drop, the default n is set, and the largest scaled condition number
+  is recorded.
 
 ### Meshing rule
 
@@ -107,6 +108,33 @@ Cantilever fixed at x = 0, point load at x = L, measured test bar.
   - Pin at x = 0 + roller at x = L.
   - Regression: pin at x = 0 + roller at x = L, point load at
     x = 0.1 mm, n = 50 per segment.
+
+### Phase B verification cases
+
+All cases use the measured test bar (E = 68,900 MPa, I = 65.68 mm^4,
+EI = 4,525,352 N*mm^2) and L = 220 mm unless stated. Expected values
+are hand-calculated. Relative tolerance 1e-6; for expected values of
+exactly 0, absolute tolerance 1e-9 N for shear and 1e-6 N*mm for
+moment. Tests use only the expected values written here.
+
+#### Case 1: cantilever, full-length uniform load
+
+- Fixed at x = 0; uniform load 0.05 N/mm downward from x = 0 to
+  x = 220 mm (solver input w = -0.05).
+- Formulas: |v(L)| = qL^4/8EI, |theta(L)| = qL^3/6EI,
+  M(x) = -q(L - x)^2/2, V(x) = +q(L - x).
+- Expected at n = 1, 2, 4:
+  - v(L) = -3.235328 mm
+  - theta(L) = -0.01960805 rad
+  - M(0) = -1210 N*mm, V(0) = +11 N
+- Expected at n = 4, both the just-left and just-right values at each
+  interior node:
+  - x = 55: V = +8.25 N, M = -680.625 N*mm
+  - x = 110: V = +5.5 N, M = -302.5 N*mm
+  - x = 165: V = +2.75 N, M = -75.625 N*mm
+  - x = 220 (free end, just-left value only): V = 0 N, M = 0 N*mm
+- Nodal values are exact for any n (consistent uniform-load vector).
+- Purpose: closes the -f_eq gap found by the A4 sabotage check.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
