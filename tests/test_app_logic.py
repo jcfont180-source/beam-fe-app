@@ -189,6 +189,29 @@ def test_format_value_shows_noise_as_zero():
     assert format_value(3.6e-15, zero_tol=1e-9) == "0"
 
 
+# --- Ties: the first location along the beam is reported ---
+
+def test_tied_largest_shear_first_test_case():
+    """First test case: V = +4.905 N along the whole beam, so the largest shear is at x = 0."""
+    beam = bar(supports=[("fixed", 0.0)], point_loads=[(220.0, 4.905)])
+    assert summarize(solve(beam).result).V == (approx(4.905), 0.0)
+
+
+def test_tied_sagging_moment_case_2():
+    """Case 2: M = +500 N*mm along the whole beam, so the largest sagging moment is at x = 0."""
+    beam = bar(supports=[("fixed", 0.0)], moments=[(220.0, 500.0, "counterclockwise")])
+    assert summarize(solve(beam).result).M_max == (approx(500.0), 0.0)
+
+
+def test_tied_hogging_moment_and_shear_case_5():
+    """Case 5: M(0) = M(220) = -201.666667 N*mm and V(0) = +5.5 N = -V(220), so both
+    extremes are reported at x = 0."""
+    beam = bar(supports=[("fixed", 0.0), ("fixed", 220.0)], uniform_loads=[(0.0, 220.0, 0.05)])
+    summary = summarize(solve(beam).result)
+    assert summary.M_min == (approx(-201.666667), 0.0)
+    assert summary.V == (approx(5.5), 0.0)
+
+
 # --- Reaction-moment display text ---
 
 def test_reaction_moment_text_counterclockwise_first_test_case():

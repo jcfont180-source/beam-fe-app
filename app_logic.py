@@ -19,6 +19,7 @@ MOMENT_DIRECTIONS = ("counterclockwise", "clockwise")
 POINTS_PER_ELEMENT = 11  # samples of the exact moment per element, ends and midpoint included
 ZERO_TOL_V = 1e-9  # N: Spec zero tolerance for shear and reaction forces
 ZERO_TOL_M = 1e-6  # N*mm: Spec zero tolerance for moments and reaction moments
+TIE_REL_TOL = 1e-9  # values this close (relative) to an extreme tie with it
 
 
 def build_beam(L, E, I, supports=(), point_loads=(), uniform_loads=(), moments=()):
@@ -97,6 +98,19 @@ def moment_curve(result, points_per_element=POINTS_PER_ELEMENT):
     return (x_left[:, None] + s).ravel(), M.ravel()
 
 
+def first_extreme_index(values, xs, largest=True):
+    """Return the index of the largest (or smallest) value, at the first location on ties.
+
+    Implements the tie rule: values within a relative tolerance of 1e-9 of the
+    extreme, |value - extreme| <= 1e-9 * |extreme|, count as tied with it, and
+    the tied value with the smallest x is reported.
+    """
+    values, xs = np.asarray(values, dtype=float), np.asarray(xs, dtype=float)
+    extreme = values.max() if largest else values.min()
+    tied = np.flatnonzero(np.abs(values - extreme) <= TIE_REL_TOL * abs(extreme))
+    return int(tied[np.argmin(xs[tied])])
+
+
 def moment_extremes(result):
     """Return (M_max, x) and (M_min, x), the largest and smallest moment on the beam.
 
@@ -104,6 +118,7 @@ def moment_extremes(result):
     plus each interior peak M* = M_left - V_left^2 / (2 w_e) at
     s* = -V_left / w_e, when w_e != 0 and 0 < s* < Le (V changes sign inside
     the element). With w_e = 0, M is linear in the element: no interior peak.
+    Ties go to the first location (first_extreme_index).
     """
     xs, Ms = list(result.x_vm), list(result.M)
     for x0, Le, M0, V0, w in zip(*element_moment_terms(result)):
@@ -112,7 +127,8 @@ def moment_extremes(result):
             if 0 < s < Le:
                 xs.append(x0 + s)
                 Ms.append(M0 - V0**2 / (2 * w))
-    i_max, i_min = int(np.argmax(Ms)), int(np.argmin(Ms))
+    i_max = first_extreme_index(Ms, xs, largest=True)
+    i_min = first_extreme_index(Ms, xs, largest=False)
     return (float(Ms[i_max]), float(xs[i_max])), (float(Ms[i_min]), float(xs[i_min]))
 
 
@@ -137,10 +153,11 @@ def summarize(result):
 
     Implements: largest |v| over the nodes; M_max and M_min from
     moment_extremes; largest |V| over the element ends (V is linear inside
-    an element, so its extremes are at element ends).
+    an element, so its extremes are at element ends). Ties go to the first
+    location (first_extreme_index).
     """
-    iv = int(np.argmax(np.abs(result.v)))
-    iV = int(np.argmax(np.abs(result.V)))
+    iv = first_extreme_index(np.abs(result.v), result.x_nodes)
+    iV = first_extreme_index(np.abs(result.V), result.x_vm)
     M_max, M_min = moment_extremes(result)
     return Summary(v=(float(result.v[iv]), float(result.x_nodes[iv])),
                    M_max=M_max, M_min=M_min,

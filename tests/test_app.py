@@ -35,10 +35,12 @@ def press_solve(at):
     return at.button(key="solve").click().run()
 
 
-def metric(at, label_start):
-    """The one metric whose label starts with label_start."""
-    (m,) = [m for m in at.metric if m.label.startswith(label_start)]
-    return m
+def tile(at, label_start):
+    """The metric whose label starts with label_start, and the captions under it (same column)."""
+    (column,) = [col for col in at.columns
+                 if any(m.label.startswith(label_start) for m in col.metric)]
+    (m,) = column.metric
+    return m, [c.value for c in column.caption]
 
 
 def test_default_inputs_show_first_test_case(at):
@@ -46,11 +48,12 @@ def test_default_inputs_show_first_test_case(at):
     M(0) = -1079.1 N*mm at x = 0, with the Default mesh n = 20 per segment."""
     press_solve(at)
     assert not at.exception and not at.error
-    v = metric(at, "Largest deflection")
-    assert v.value == f"{sig4(-3.847100)} mm" and "x = 220 mm" in v.label
+    v, v_notes = tile(at, "Largest deflection")
+    assert v.value == f"{sig4(-3.847100)} mm" and "at x = 220 mm" in v_notes
     assert "+ = up" in v.label
-    hogging = metric(at, "Largest hogging moment")
-    assert hogging.value == f"{sig4(-1079.1)} N·mm" and "x = 0 mm" in hogging.label
+    hogging, hogging_notes = tile(at, "Largest hogging moment")
+    assert hogging.value == f"{sig4(-1079.1)} N·mm" and "at x = 0 mm" in hogging_notes
+    assert all("x =" not in m.label for m in at.metric)  # locations sit under the tiles
     captions = [c.value for c in at.caption]
     assert any("n = 20 elements per segment" in c for c in captions)
     assert "Rectangle: I = b*h^3/12" in captions
@@ -59,9 +62,9 @@ def test_default_inputs_show_first_test_case(at):
     assert at.get("image")  # the plots are shown
 
 
-def test_case_2_shows_its_tip_deflection(at):
-    """Case 2 entered on the page, 500 N*mm counterclockwise at x = 220 and no point
-    load: v(L) = +2.673825 mm at x = 220."""
+def enter_case_2(at):
+    """Enter Case 2 on the page: fixed at x = 0, 500 N*mm counterclockwise at x = 220,
+    no point load; then press Solve."""
     at.number_input(key="n_point_loads").set_value(0)
     at.number_input(key="n_moments").set_value(1).run()
     at.number_input(key="moment_x_0").set_value(220.0)
@@ -69,9 +72,23 @@ def test_case_2_shows_its_tip_deflection(at):
     at.selectbox(key="moment_dir_0").set_value("counterclockwise")
     press_solve(at)
     assert not at.exception and not at.error
-    v = metric(at, "Largest deflection")
-    assert v.value == f"{sig4(2.673825)} mm" and "x = 220 mm" in v.label
+
+
+def test_case_2_shows_its_tip_deflection(at):
+    """Case 2 entered on the page: v(L) = +2.673825 mm at x = 220."""
+    enter_case_2(at)
+    v, v_notes = tile(at, "Largest deflection")
+    assert v.value == f"{sig4(2.673825)} mm" and "at x = 220 mm" in v_notes
     assert "+ = up" in v.label
+
+
+def test_zero_shear_tile_has_no_location(at):
+    """Case 2: V = 0 along the whole beam, so the shear tile shows "0 N" and no location
+    line (the value is within the Spec zero tolerance, 1e-9 N)."""
+    enter_case_2(at)
+    shear, shear_notes = tile(at, "Largest shear")
+    assert shear.value == "0 N"
+    assert shear_notes == []
 
 
 def test_pin_only_shows_stability_message_and_no_plots(at):

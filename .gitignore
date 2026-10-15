@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local launch configuration for the in-app browser preview
+.claude/launch.json

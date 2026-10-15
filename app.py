@@ -99,6 +99,18 @@ def solve_inputs(inputs):
     return app_logic.solve(beam, inputs["n_per_segment"])
 
 
+def show_tile(column, label, text, unit, x):
+    """Show one result tile: a short label, the value, and its location on its own line.
+
+    Implements the App design display rules: labels must fit, so the location
+    goes under the tile ("at x = ... mm"); a value shown as "0" (within the
+    Spec zero tolerance) or "none" has no meaningful location, so no line.
+    """
+    column.metric(label, text if text == "none" else f"{text} {unit}")
+    if text not in ("0", "none"):
+        column.caption(f"at x = {fmt(x)} mm")
+
+
 def show_outcome(outcome):
     """Show the error message, or the summary, reactions, plots and mesh notes.
 
@@ -114,17 +126,13 @@ def show_outcome(outcome):
     (v, x_v), (M_max, x_max), (M_min, x_min), (V, x_V) = (
         summary.v, summary.M_max, summary.M_min, summary.V)
 
-    tiles = st.columns(4)
-    tiles[0].metric(f"Largest deflection (+ = up, x = {fmt(x_v)} mm)", f"{fmt(v)} mm")
-    if M_max > ZERO_TOL_M:
-        tiles[1].metric(f"Largest sagging moment (x = {fmt(x_max)} mm)", f"{fmt(M_max)} N·mm")
-    else:
-        tiles[1].metric("Largest sagging moment", "none")
-    if M_min < -ZERO_TOL_M:
-        tiles[2].metric(f"Largest hogging moment (x = {fmt(x_min)} mm)", f"{fmt(M_min)} N·mm")
-    else:
-        tiles[2].metric("Largest hogging moment", "none")
-    tiles[3].metric(f"Largest shear (x = {fmt(x_V)} mm)", f"{fmt(V, ZERO_TOL_V)} N")
+    tiles = [*st.columns(2), *st.columns(2)]  # two rows of two, so labels and values fit
+    sagging = fmt(M_max) if M_max > ZERO_TOL_M else "none"
+    hogging = fmt(M_min) if M_min < -ZERO_TOL_M else "none"
+    show_tile(tiles[0], "Largest deflection (+ = up)", fmt(v), "mm", x_v)
+    show_tile(tiles[1], "Largest sagging moment", sagging, "N·mm", x_max)
+    show_tile(tiles[2], "Largest hogging moment", hogging, "N·mm", x_min)
+    show_tile(tiles[3], "Largest shear", fmt(V, ZERO_TOL_V), "N", x_V)
 
     st.subheader("Reactions")
     st.table([{"x (mm)": fmt(r.x), "Support": r.kind,
