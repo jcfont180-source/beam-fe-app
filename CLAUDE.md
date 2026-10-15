@@ -209,6 +209,31 @@ expected values written here.
   the default n matters: at n = 1 every reported value is exact, but
   the plotted moment diagram is a straight line at 0.
 
+#### Case 5: fixed at both ends, full-length uniform load
+
+- Fixed at x = 0 and x = 220 mm; uniform load 0.05 N/mm downward from
+  x = 0 to x = 220 mm (solver input w = -0.05).
+- Formulas: |M(0)| = |M(L)| = qL^2/12 (hogging), M(L/2) = +qL^2/24
+  (sagging), |v(L/2)| = qL^4/384EI, reactions qL/2 each. Cross-check:
+  v(L/2) is 1/5 of Case 4's v(L/2).
+- Expected at n = 1, 2, 4:
+  - M(0) = M(220) = -201.666667 N*mm (exact value -605/3)
+  - V(0) = +5.5 N; V at x = 220 (just-left value): -5.5 N
+  - theta(0) = theta(220) = 0 rad exactly (held by the supports)
+  - Reactions, solver convention: force +5.5 N at both walls; moment
+    +201.666667 N*mm at x = 0 (counterclockwise) and -201.666667 N*mm
+    at x = 220 (clockwise)
+- Expected at n = 2, 4 only (n = 1 has no node at x = 110):
+  - v(110) = -0.06740268 mm
+  - M(110) = +100.833333 N*mm (exact value 605/6), V(110) = 0 N
+    (both the just-left and just-right values)
+- At n = 1 no unknown is free: the solver skips the solve, the scaled
+  condition number is NaN, and every result comes from -f_eq alone
+  (the fixed-end forces).
+- Zero values use the absolute tolerances above.
+- Purpose: tests a fixed support at the right end (its reaction
+  moment sign), and the no-free-unknowns path with a load on it.
+
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
 - Never change an expected value in tests/. If a test fails, fix the
