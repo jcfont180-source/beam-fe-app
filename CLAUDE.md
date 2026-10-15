@@ -13,10 +13,8 @@
 - Sanity case: cantilever fixed at x = 0, downward tip load P gives
   negative tip deflection, negative tip rotation, negative moment at the
   fixed end.
-- Current phase and its gate: Phase B: verification. Gate: every
-  Phase B case passes, the convergence study shows the expected error
-  drop, the default n is set, and the largest scaled condition number
-  is recorded.
+- Current phase and its gate: Phase C: web app. Gate: to be set when
+  the Phase C plan is approved, before any app code.
 
 ### Meshing rule
 
@@ -275,6 +273,24 @@ expected values written here.
   before.
 - Test: a beam with 26 segments and no n argument uses n = 19
   (494 elements).
+
+### Phase B record
+
+- Largest scaled condition number across all Phase B tests: 4.45e10,
+  for the 26-segment default-mesh beam (n = 19, 494 elements).
+- Cases 1-5 at n = 20: largest 1.26e6 (Case 3). At n = 50: largest
+  4.93e7 (Case 3).
+- Outside Phase B, the Phase A regression beam (load 0.1 mm from the
+  pin, n = 50) gives 9.85e10, and its deflection under the load still
+  matches the closed form to 1.5e-6 (relative), which supports
+  reporting the condition number only, never using it to reject a
+  beam.
+- The condition number depends only on the supports and the mesh, not
+  the loads, and grows roughly as n^4 (the beam equation
+  EI v'''' = w is fourth order).
+- Phase B gate passed October 15, 2026: every case passes, Case 6
+  shows the 4x drop per doubling of n, the default n is set, and this
+  record is complete.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
