@@ -1,4 +1,4 @@
-"""Meshing rule from the Spec: required nodes, merging, and subdivision.
+"""Meshing rule from the Spec: required nodes, merging, subdivision, and the default n.
 
 All locations are in mm, measured from the left end of the beam.
 """
@@ -8,6 +8,7 @@ import numpy as np
 MERGE_TOL = 1e-9  # mm: required node locations this close are merged (rule 1)
 MAX_N_PER_SEGMENT = 50  # elements per segment (rule 3)
 MAX_ELEMENTS = 500  # elements in the whole beam (rule 3)
+DEFAULT_N_PER_SEGMENT = 20  # elements per segment when n is not given (Default mesh)
 
 
 def trigger_locations(beam):
@@ -59,6 +60,22 @@ def build_mesh(beam, n_per_segment):
             f"the maximum is {MAX_ELEMENTS}. Use a smaller n_per_segment.")
     segments = [np.linspace(a, b, n + 1)[:-1] for a, b in zip(req[:-1], req[1:])]
     return np.concatenate(segments + [req[-1:]])
+
+
+def default_n_per_segment(beam):
+    """Return the number of elements per segment to use when n is not given.
+
+    Implements the Default mesh rule: n = min(20, floor(500 / number of
+    segments)), so the default never exceeds the 500-element cap. Raises
+    ValueError if even n = 1 would exceed the cap.
+    """
+    n_segments = len(required_nodes(beam)) - 1
+    n = min(DEFAULT_N_PER_SEGMENT, MAX_ELEMENTS // n_segments)
+    if n < 1:
+        raise ValueError(
+            f"The beam has {n_segments} segments; even 1 element per segment exceeds "
+            f"the maximum of {MAX_ELEMENTS} elements.")
+    return n
 
 
 def node_index(x_nodes, x):

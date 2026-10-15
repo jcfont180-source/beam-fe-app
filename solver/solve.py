@@ -8,7 +8,7 @@ forces positive up, moments counterclockwise positive.
 import numpy as np
 
 from solver.element import element_stiffness, uniform_load_vector
-from solver.mesh import build_mesh, node_index
+from solver.mesh import build_mesh, default_n_per_segment, node_index
 from solver.model import BeamResult, Reaction, check_stability, validate_beam
 
 
@@ -121,16 +121,22 @@ def internal_forces(x_nodes, EI, w, u):
     return x_vm, V, M
 
 
-def solve_beam(beam, n_per_segment):
+def solve_beam(beam, n_per_segment=None):
     """Solve the beam and return a BeamResult.
 
     Implements K_ff u_f = F_f, the global system with the rows and columns
     held by the supports removed (held unknowns are 0). Steps: validate the
     inputs, check stability from the supports, build the mesh, assemble K
     and F, solve, then compute reactions and shear and moment.
+
+    n_per_segment: elements per segment. If not given, the Default mesh rule
+    applies (default_n_per_segment): 20, or the largest n that fits the
+    500-element cap. An n given explicitly is never changed.
     """
     validate_beam(beam)
     check_stability(beam)
+    if n_per_segment is None:
+        n_per_segment = default_n_per_segment(beam)
     x_nodes = build_mesh(beam, n_per_segment)
     EI = beam.E * beam.I
     K = assemble_stiffness(x_nodes, EI)
