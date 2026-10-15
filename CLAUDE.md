@@ -13,26 +13,13 @@
 - Sanity case: cantilever fixed at x = 0, downward tip load P gives
   negative tip deflection, negative tip rotation, negative moment at the
   fixed end.
-- Current phase and its gate: Phase C: web app. Gate:
-  - All app_logic and app (AppTest) tests pass, using only Spec
-    values.
-  - Every input conversion is tested through app_logic with a Spec
-    case: point load (first test case), uniform load (Case 1),
-    applied moment entered as 500 N*mm counterclockwise (Case 2),
-    plus Case 3 and the must-fail beams.
-  - The moment between nodes is exact: Case 4's beam at n = 1 gives a
-    largest sagging moment of 302.5 N*mm at x = 110, and Case 6's
-    beam at n = 2 gives a plotted moment at each element midpoint
-    equal to M(x) = q x (L - x)/2 (rel. tol. 1e-6).
-  - Through the page: the default inputs show the first test case's
-    v(L) and M(0), and Case 2's inputs show its v(L), each matching
-    the Spec value to 4 significant figures; a beam with a pin only
-    shows the Stability check message and no plots; a load past the
-    end of the beam shows the validation message without crashing.
-  - app.py contains no beam math: it only calls app_logic and the
-    solver.
-  - I run the app myself and can explain how each input reaches the
-    solver.
+- Current phase and its gate: Phase D: physical test. Gate: deflection
+  measured at four loads (about 250, 500, 750 and 1000 g) on the
+  clamped test bar, recorded in docs/measurements/; the measured L
+  recorded; the slope of deflection vs. load compared with the
+  solver's prediction for the measured L; and the difference and its
+  likely causes explained in my own words. Phase C gate passed
+  October 15, 2026.
 
 ### Meshing rule
 
@@ -336,6 +323,10 @@ expected values written here.
   the Spec's message, with no results or plots.
 - app.py contains no beam math: it only calls app_logic and the
   solver. No deployment in Phase C.
+- Ties: when several locations share an extreme (within a relative
+  tolerance of 1e-9), the summary reports the first location.
+- A tile whose value shows as "0" (within the Spec zero tolerance) or
+  "none" has no location line.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
