@@ -114,8 +114,9 @@ Cantilever fixed at x = 0, point load at x = L, measured test bar.
 All cases use the measured test bar (E = 68,900 MPa, I = 65.68 mm^4,
 EI = 4,525,352 N*mm^2) and L = 220 mm unless stated. Expected values
 are hand-calculated. Relative tolerance 1e-6; for expected values of
-exactly 0, absolute tolerance 1e-9 N for shear and 1e-6 N*mm for
-moment. Tests use only the expected values written here.
+exactly 0, absolute tolerance 1e-9 N for shear and reaction forces,
+and 1e-6 N*mm for moments and reaction moments. Tests use only the
+expected values written here.
 
 #### Case 1: cantilever, full-length uniform load
 
@@ -184,6 +185,29 @@ moment. Tests use only the expected values written here.
 - Nodal values are exact for any n (the load sits at a node).
 - Purpose: tests a shear jump at a point load, opposite end rotations,
   and pin and roller reactions.
+
+#### Case 4: simply supported, full-length uniform load
+
+- Pin at x = 0, roller at x = 220 mm; uniform load 0.05 N/mm downward
+  from x = 0 to x = 220 mm (solver input w = -0.05).
+- Formulas: |v(L/2)| = 5qL^4/384EI, |theta(0)| = |theta(L)| = qL^3/24EI,
+  |M(L/2)| = qL^2/8, reactions qL/2 each, V(x) = qL/2 - qx.
+  Cross-check against Case 1 (same q, L, EI): v(L/2) is 5/48 of
+  Case 1's v(L); theta(0) and M(L/2) are 1/4 of Case 1's values.
+- Expected at n = 1, 2, 4:
+  - theta(0) = -0.004902013 rad, theta(220) = +0.004902013 rad
+  - M(0) = 0 N*mm, M(220) = 0 N*mm
+  - V(0) = +5.5 N; V at x = 220 (just-left value): -5.5 N
+  - Reactions: force +5.5 N at x = 0 and at x = 220; moment 0 at both
+- Expected at n = 2, 4 only (n = 1 has no node at x = 110):
+  - v(110) = -0.3370134 mm
+  - M(110) = +302.5 N*mm, V(110) = 0 N (both the just-left and
+    just-right values)
+- Zero values use the absolute tolerances above.
+- Nodal values are exact for any n (consistent uniform-load vector).
+- Purpose: tests a uniform load between two supports, and shows why
+  the default n matters: at n = 1 every reported value is exact, but
+  the plotted moment diagram is a straight line at 0.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
