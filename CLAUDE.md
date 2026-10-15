@@ -53,9 +53,9 @@ into n equal-length elements (n elements per segment, set by user
 input or a default value). While the required nodes place every load
 and support exactly, subdividing the space between them provides the
 resolution needed to render smooth, continuous shear, moment, and
-deflection plots. The default value of n will be set by the Phase B
-convergence study. The maximum allowed value is n = 50 per segment,
-and no more than 500 elements total.
+deflection plots. The default value of n is 20 (see Default mesh).
+The maximum allowed value is n = 50 per segment, and no more than
+500 elements total.
 
 ### First test case (Decision 4)
 
@@ -233,6 +233,48 @@ expected values written here.
 - Zero values use the absolute tolerances above.
 - Purpose: tests a fixed support at the right end (its reaction
   moment sign), and the no-free-unknowns path with a load on it.
+
+#### Case 6: convergence study (plotted moment between nodes)
+
+- Case 4's beam: pin at x = 0, roller at x = 220 mm, uniform load
+  0.05 N/mm downward over the whole span (solver input w = -0.05).
+- Quantity: at the midpoint of every element, the gap between the
+  exact moment M(x) = q x (L - x) / 2 (q = 0.05 N/mm, sagging
+  positive) and the straight-line value the plot draws there,
+  (M_left + M_right) / 2, from the solver's element-end values.
+- Derivation: the chord is a straight line (zero second derivative),
+  so the gap has the same second derivative as M (M'' = w) and is zero
+  at both element ends. That is the moment in a simply supported beam
+  of length h, so the gap at every element midpoint is q h^2 / 8.
+- Expected at n = 2, 4, 8, 16 (h = 220/n), at every element midpoint:
+  - n = 2: 75.625 N*mm
+  - n = 4: 18.90625 N*mm
+  - n = 8: 4.7265625 N*mm
+  - n = 16: 1.181640625 N*mm
+- Each doubling of n cuts the gap by exactly 4. As a fraction of the
+  true peak (302.5 N*mm) the gap is 1/n^2.
+- The straight line underestimates the true sagging moment between
+  nodes (unconservative).
+- Relative tolerance 1e-6.
+
+### Default mesh
+
+- Default n = 20 elements per segment. Reason: the straight-line
+  moment plot underestimates the true moment between nodes
+  (unconservative); for Case 4's beam the gap is 1/n^2 of the peak,
+  0.25% at n = 20. Twenty per segment still allows 25 segments under
+  the 500-element cap.
+- solve_beam uses n = 20 when n_per_segment is not given.
+- Test: solve_beam on Case 4's beam with no n argument gives the same
+  results as n = 20.
+- Option (b), for the default only: if n_per_segment is not given
+  and 20 per segment would exceed the 500-element cap, solve_beam
+  uses the largest n that fits, floor(500 / number of segments). If
+  even n = 1 would exceed the cap, it raises ValueError. An n given
+  explicitly is never changed; if it exceeds the cap, ValueError as
+  before.
+- Test: a beam with 26 segments and no n argument uses n = 19
+  (494 elements).
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
