@@ -17,6 +17,8 @@ from solver.mesh import default_n_per_segment
 
 MOMENT_DIRECTIONS = ("counterclockwise", "clockwise")
 POINTS_PER_ELEMENT = 11  # samples of the exact moment per element, ends and midpoint included
+ZERO_TOL_V = 1e-9  # N: Spec zero tolerance for shear and reaction forces
+ZERO_TOL_M = 1e-6  # N*mm: Spec zero tolerance for moments and reaction moments
 
 
 def build_beam(L, E, I, supports=(), point_loads=(), uniform_loads=(), moments=()):
@@ -177,3 +179,19 @@ def format_value(value, zero_tol=0.0):
     if abs(value) <= zero_tol:
         return "0"
     return f"{value:.4g}"
+
+
+def reaction_moment_text(reaction):
+    """Return a support's reaction moment as display text, with its turning direction.
+
+    Implements the reaction display rule: a fixed support's moment at 4
+    significant figures followed by its direction in solver convention
+    (positive = counterclockwise, negative = clockwise); "0" within the zero
+    tolerance ZERO_TOL_M; "-" for a pin or roller, which holds no moment.
+    """
+    if reaction.kind != "fixed":
+        return "-"
+    text = format_value(reaction.moment, ZERO_TOL_M)
+    if text == "0":
+        return text
+    return f"{text} ({'counterclockwise' if reaction.moment > 0 else 'clockwise'})"

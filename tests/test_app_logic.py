@@ -8,7 +8,8 @@ moments as a magnitude plus a direction.
 import numpy as np
 import pytest
 
-from app_logic import build_beam, format_value, make_figure, moment_curve, solve, summarize
+from app_logic import (build_beam, format_value, make_figure, moment_curve, reaction_moment_text,
+                       solve, summarize)
 from solver.model import validate_beam
 
 E, I, L = 68900.0, 65.68, 220.0  # measured test bar
@@ -186,3 +187,26 @@ def test_format_value_four_significant_figures(value, text):
 def test_format_value_shows_noise_as_zero():
     """A value within the zero tolerance (e.g. the Spec's 1e-9 N for shear) displays as 0."""
     assert format_value(3.6e-15, zero_tol=1e-9) == "0"
+
+
+# --- Reaction-moment display text ---
+
+def test_reaction_moment_text_counterclockwise_first_test_case():
+    """First test case: the wall's reaction moment +1079.1 N*mm shows as counterclockwise."""
+    beam = bar(supports=[("fixed", 0.0)], point_loads=[(220.0, 4.905)])
+    (reaction,) = solve(beam).result.reactions
+    assert reaction_moment_text(reaction) == f"{1079.1:.4g} (counterclockwise)"
+
+
+def test_reaction_moment_text_clockwise_case_2():
+    """Case 2: the wall's reaction moment -500 N*mm shows as clockwise."""
+    beam = bar(supports=[("fixed", 0.0)], moments=[(220.0, 500.0, "counterclockwise")])
+    (reaction,) = solve(beam).result.reactions
+    assert reaction_moment_text(reaction) == f"{-500.0:.4g} (clockwise)"
+
+
+def test_reaction_moment_text_pin_and_roller_case_3():
+    """Case 3: a pin and a roller hold no moment, so both show "-"."""
+    beam = bar(supports=[("pin", 0.0), ("roller", 220.0)], point_loads=[(110.0, 4.905)])
+    reactions = solve(beam).result.reactions
+    assert [reaction_moment_text(r) for r in reactions] == ["-", "-"]
