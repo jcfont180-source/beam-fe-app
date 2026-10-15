@@ -13,8 +13,26 @@
 - Sanity case: cantilever fixed at x = 0, downward tip load P gives
   negative tip deflection, negative tip rotation, negative moment at the
   fixed end.
-- Current phase and its gate: Phase C: web app. Gate: to be set when
-  the Phase C plan is approved, before any app code.
+- Current phase and its gate: Phase C: web app. Gate:
+  - All app_logic and app (AppTest) tests pass, using only Spec
+    values.
+  - Every input conversion is tested through app_logic with a Spec
+    case: point load (first test case), uniform load (Case 1),
+    applied moment entered as 500 N*mm counterclockwise (Case 2),
+    plus Case 3 and the must-fail beams.
+  - The moment between nodes is exact: Case 4's beam at n = 1 gives a
+    largest sagging moment of 302.5 N*mm at x = 110, and Case 6's
+    beam at n = 2 gives a plotted moment at each element midpoint
+    equal to M(x) = q x (L - x)/2 (rel. tol. 1e-6).
+  - Through the page: the default inputs show the first test case's
+    v(L) and M(0), and Case 2's inputs show its v(L), each matching
+    the Spec value to 4 significant figures; a beam with a pin only
+    shows the Stability check message and no plots; a load past the
+    end of the beam shows the validation message without crashing.
+  - app.py contains no beam math: it only calls app_logic and the
+    solver.
+  - I run the app myself and can explain how each input reaches the
+    solver.
 
 ### Meshing rule
 
@@ -203,9 +221,10 @@ expected values written here.
     just-right values)
 - Zero values use the absolute tolerances above.
 - Nodal values are exact for any n (consistent uniform-load vector).
-- Purpose: tests a uniform load between two supports, and shows why
-  the default n matters: at n = 1 every reported value is exact, but
-  the plotted moment diagram is a straight line at 0.
+- Purpose: tests a uniform load between two supports. At n = 1 every
+  reported element-end value is exact, but a straight-line moment
+  plot between them would be flat at 0; the app's exact in-element
+  moment (App design) shows the true peak of 302.5 N*mm at x = 110.
 
 #### Case 5: fixed at both ends, full-length uniform load
 
@@ -238,7 +257,7 @@ expected values written here.
   0.05 N/mm downward over the whole span (solver input w = -0.05).
 - Quantity: at the midpoint of every element, the gap between the
   exact moment M(x) = q x (L - x) / 2 (q = 0.05 N/mm, sagging
-  positive) and the straight-line value the plot draws there,
+  positive) and the straight-line value between the element ends,
   (M_left + M_right) / 2, from the solver's element-end values.
 - Derivation: the chord is a straight line (zero second derivative),
   so the gap has the same second derivative as M (M'' = w) and is zero
@@ -257,11 +276,14 @@ expected values written here.
 
 ### Default mesh
 
-- Default n = 20 elements per segment. Reason: the straight-line
-  moment plot underestimates the true moment between nodes
-  (unconservative); for Case 4's beam the gap is 1/n^2 of the peak,
-  0.25% at n = 20. Twenty per segment still allows 25 segments under
-  the 500-element cap.
+- Default n = 20 elements per segment. Reason: the app draws
+  deflection as straight lines between nodes and takes the largest
+  deflection at nodes, so n sets how closely they follow the true
+  curve. (The moment is drawn exactly inside each element; see App
+  design. A straight-line moment plot would underestimate the moment
+  between nodes by 1/n^2 of the peak for Case 4's beam, 0.25% at
+  n = 20.) Twenty per segment still allows 25 segments under the
+  500-element cap.
 - solve_beam uses n = 20 when n_per_segment is not given.
 - Test: solve_beam on Case 4's beam with no n argument gives the same
   results as n = 20.
@@ -291,6 +313,29 @@ expected values written here.
 - Phase B gate passed October 15, 2026: every case passes, Case 6
   shows the 4x drop per doubling of n, the default n is set, and this
   record is complete.
+
+### App design (Phase C)
+
+- Loads are entered in the user's convention: point loads and uniform
+  loads as positive downward (labels say "+ = downward"); the app
+  sends F = -P and w = -w to the solver. Applied moments: a positive
+  magnitude plus a direction dropdown (clockwise or counterclockwise);
+  the app sends +|M| for counterclockwise and -|M| for clockwise.
+- Section: I is entered directly (prefilled 65.68 mm^4), with the
+  caption "Rectangle: I = b*h^3/12". Units: N, mm, MPa only.
+- Mesh: "Automatic" (the Default mesh rule) or a chosen n from 1 to 50.
+- A Solve button; results are not recomputed on every input change.
+- Display: 4 significant figures; unit tests check unrounded values.
+- Exact moment inside each element: V is linear in an element, so
+  w_e = (V_right - V_left)/Le and M(s) = M_left + V_left*s + w_e*s^2/2
+  is exact. The plot uses it at several points per element, and the
+  summary's largest sagging and hogging moments include an interior
+  peak at s* = -V_left/w_e when 0 < s* < Le. Deflection is drawn as
+  straight lines between nodes.
+- Errors: a ValueError shows its message; an UnstableBeamError shows
+  the Spec's message, with no results or plots.
+- app.py contains no beam math: it only calls app_logic and the
+  solver. No deployment in Phase C.
 
 ## Working rules
 - Propose a plan before writing code, and build only the current phase.
